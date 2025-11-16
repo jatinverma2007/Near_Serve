@@ -1,0 +1,19 @@
+{
+  "name": "nearserve-monorepo",
+  "version": "1.0.0",
+  "description": "NearServe - Find trusted services near you",
+  "private": true,
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm run build",
+    "preview:frontend": "cd frontend && npm run preview"
+  },
+  "keywords": ["nearserve", "services", "plumber", "electrician", "mechanic"],
+  "author": "Jatin Verma",
+  "license": "ISC"
+}
