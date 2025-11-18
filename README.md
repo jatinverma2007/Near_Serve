@@ -84,7 +84,7 @@ npm run dev
 npm start
 ```
 
-The backend server will run on `http://localhost:3000`
+The backend server will run on `https://near-serve.onrender.com`
 
 ### Frontend Setup
 
@@ -108,7 +108,7 @@ VITE_API_URL=http://localhost:3000/api
 npm run dev
 ```
 
-The frontend will run on `http://localhost:5173`
+The frontend will run on `https://near-serve-mocha.vercel.app/`
 
 ## API Endpoints
 
