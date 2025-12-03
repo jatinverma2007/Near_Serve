@@ -16,7 +16,10 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      // Password not required for OAuth users
+      return !this.googleId;
+    },
     minlength: 6
   },
   name: {
@@ -24,13 +27,26 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Name is required'],
     trim: true
   },
+  role: {
+    type: String,
+    enum: ['customer', 'provider'],
+    default: 'customer'
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // Allows null values to not be unique
+  },
+  avatar: {
+    type: String
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Hash password before saving
+
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next();
@@ -44,12 +60,12 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Method to verify password
+
 userSchema.methods.verifyPassword = async function(plainPassword) {
   return await bcrypt.compare(plainPassword, this.password);
 };
 
-// Method to get user without password
+
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;

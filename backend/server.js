@@ -4,7 +4,14 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const config = require('./config');
+const passport = require('./config/googleAuth');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/userRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const providerRoutes = require('./routes/providerRoutes');
 const authMiddleware = require('./middleware/auth');
 const User = require('./models/user');
 
@@ -24,7 +31,7 @@ const corsOptions = {
         'https://near-serve.vercel.app',
         /\.vercel\.app$/
       ]
-    : ['http://localhost:5173', 'http://localhost:3000'],
+    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180', 'http://localhost:5181', 'http://localhost:5182', 'http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -32,6 +39,7 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions)); // Enable CORS with configuration
 app.use(express.json());
+app.use(passport.initialize()); // Initialize Passport for OAuth
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -43,13 +51,43 @@ app.get('/', (req, res) => {
     endpoints: {
       register: 'POST /api/auth/register',
       login: 'POST /api/auth/login',
-      profile: 'GET /api/profile (protected)'
+      profile: 'GET /api/profile (protected)',
+      services: 'GET /api/services',
+      createService: 'POST /api/services (protected)',
+      serviceDetails: 'GET /api/services/:id',
+      createBooking: 'POST /api/bookings (protected)',
+      userBookings: 'GET /api/bookings (protected)',
+      providerBookings: 'GET /api/bookings/provider/bookings (protected)',
+      updateBookingStatus: 'PUT /api/bookings/:id/status (protected)',
+      createReview: 'POST /api/reviews (protected)',
+      serviceReviews: 'GET /api/services/:id/reviews',
+      notifications: 'GET /api/notifications (protected)',
+      markAsRead: 'PUT /api/notifications/:id/read (protected)',
+      unreadCount: 'GET /api/notifications/unread-count (protected)'
     }
   });
 });
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// User routes
+app.use('/api/users', userRoutes);
+
+// Service routes
+app.use('/api/services', serviceRoutes);
+
+// Booking routes
+app.use('/api/bookings', bookingRoutes);
+
+// Review routes
+app.use('/api/reviews', reviewRoutes);
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes);
+
+// Provider routes (including availability)
+app.use('/api/providers', providerRoutes);
 
 // Protected route - requires valid JWT token
 app.get('/api/profile', authMiddleware, async (req, res) => {

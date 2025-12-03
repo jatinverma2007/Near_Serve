@@ -1,19 +1,12 @@
-/**
- * Authentication Middleware
- * Verifies JWT tokens and protects routes
- */
+
 
 const jwt = require('jsonwebtoken');
 const config = require('../config');
 
-/**
- * Middleware to verify JWT token from Authorization header
- * Expects header format: "Bearer <token>"
- * Sets req.user with decoded token payload
- */
+
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from Authorization header
+    
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -23,7 +16,7 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Check if token starts with "Bearer "
+    
     if (!authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
@@ -31,8 +24,8 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Extract token
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
+    
+    const token = authHeader.substring(7); 
 
     if (!token) {
       return res.status(401).json({
@@ -41,21 +34,21 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // Verify token
+    
     try {
       
       const decoded = jwt.verify(token, config.JWT_SECRET);
       
-      // Attach user info to request
+      
       req.user = {
         id: decoded.id,
         email: decoded.email
       };
 
-      // Continue to next middleware/route
+      
       next();
     } catch (jwtError) {
-      // Handle specific JWT errors
+     
       if (jwtError.name === 'TokenExpiredError') {
         return res.status(401).json({
           success: false,
