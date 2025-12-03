@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import SearchBar from '../components/SearchBar';
-import INDIAN_SERVICES from '../data/indianServices';
-import ServiceCard from '../components/ServiceCard';
+import { getAllServices } from '../services/serviceAPI';
+import { getTopProviders } from '../services/providerAPI';
 
 function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [featuredServices, setFeaturedServices] = useState([]);
+  const [featuredProviders, setFeaturedProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { name: 'Plumber', icon: '🔧', value: 'plumber' },
@@ -21,45 +24,37 @@ function Home() {
     { name: 'Appliance Repair', icon: '🔧', value: 'appliance-repair' },
   ];
 
-  // Use Indian services data - get first 8 as featured
-  const featuredServices = INDIAN_SERVICES.slice(0, 8);
+  // Fetch real data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch featured services
+        const servicesResponse = await getAllServices({ limit: 8 });
+        if (servicesResponse.success && servicesResponse.data) {
+          setFeaturedServices(servicesResponse.data);
+        }
+        
+        // Fetch top providers
+        try {
+          const providersResponse = await getTopProviders({ limit: 3 });
+          if (providersResponse.success && providersResponse.data) {
+            setFeaturedProviders(providersResponse.data);
+          }
+        } catch (err) {
+          console.log('Could not fetch providers:', err);
+          setFeaturedProviders([]);
+        }
+      } catch (error) {
+        console.error('Error fetching home data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Dummy featured providers data
-  const featuredProviders = [
-    {
-      _id: 'p1',
-      businessName: 'Cool Air Services',
-      bio: 'Professional AC repair and servicing with 15+ years of experience. All brands covered.',
-      categories: ['ac-repair'],
-      rating: { average: 4.8, count: 124 },
-      location: { city: 'Delhi', state: 'Delhi' },
-      stats: { totalBookings: 450, completedBookings: 442 },
-      profileImage: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200',
-      verified: true,
-    },
-    {
-      _id: 'p2',
-      businessName: 'CleanPro India',
-      bio: 'Eco-friendly home and office cleaning services with trained professionals across Mumbai.',
-      categories: ['cleaner'],
-      rating: { average: 4.9, count: 89 },
-      location: { city: 'Mumbai', state: 'Maharashtra' },
-      stats: { totalBookings: 320, completedBookings: 315 },
-      profileImage: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200',
-      verified: true,
-    },
-    {
-      _id: 'p3',
-      businessName: 'Sharma Electricals',
-      bio: 'Licensed electricians providing safe and reliable electrical services for homes and offices.',
-      categories: ['electrician'],
-      rating: { average: 4.7, count: 156 },
-      location: { city: 'Bengaluru', state: 'Karnataka' },
-      stats: { totalBookings: 580, completedBookings: 571 },
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-      verified: true,
-    },
-  ];
+    fetchData();
+  }, []);
 
   const handleCategoryClick = (category) => {
     navigate(`/search?category=${category}`);
@@ -108,45 +103,54 @@ function Home() {
             View All →
           </Link>
         </div>
-        <div className="featured-services-grid">
-          {featuredServices.map((service) => (
-            <Link
-              key={service._id}
-              to={`/services/${service._id}`}
-              className="featured-service-card"
-            >
-              <div className="service-image-container">
-                <img
-                  src={service.images[0]}
-                  alt={service.title}
-                  className="service-image"
-                />
-                <div className="service-category-badge">{service.category}</div>
-              </div>
-              <div className="service-content">
-                <h3 className="service-title">{service.title}</h3>
-                <p className="service-description">{service.description}</p>
-                <div className="service-provider">
-                  <span>by {service.provider.businessName}</span>
+        {loading ? (
+          <div className="loading-state">Loading services...</div>
+        ) : featuredServices.length === 0 ? (
+          <div className="empty-state">
+            <p>No services available yet. Be the first provider to add services!</p>
+            <Link to="/search" className="btn-primary">Browse Services</Link>
+          </div>
+        ) : (
+          <div className="featured-services-grid">
+            {featuredServices.map((service) => (
+              <Link
+                key={service._id}
+                to={`/services/${service._id}`}
+                className="featured-service-card"
+              >
+                <div className="service-image-container">
+                  <img
+                    src={service.images?.[0] || 'https://via.placeholder.com/300x200?text=Service'}
+                    alt={service.title}
+                    className="service-image"
+                  />
+                  <div className="service-category-badge">{service.category}</div>
                 </div>
-                <div className="service-footer">
-                  <div className="service-rating">
-                    <span className="rating-star">⭐</span>
-                    <span className="rating-value">{service.rating.average}</span>
-                    <span className="rating-count">({service.rating.count})</span>
+                <div className="service-content">
+                  <h3 className="service-title">{service.title}</h3>
+                  <p className="service-description">{service.description}</p>
+                  <div className="service-provider">
+                    <span>by {service.providerId?.businessName || 'Provider'}</span>
                   </div>
-                  <div className="service-price">
-                    <span className="price-amount">₹{service.price}</span>
-                    <span className="price-type">/{service.priceType}</span>
+                  <div className="service-footer">
+                    <div className="service-rating">
+                      <span className="rating-star">⭐</span>
+                      <span className="rating-value">{service.rating?.average || service.rating || 0}</span>
+                      <span className="rating-count">({service.rating?.count || 0})</span>
+                    </div>
+                    <div className="service-price">
+                      <span className="price-amount">₹{service.price}</span>
+                      <span className="price-type">/{service.priceType || 'service'}</span>
+                    </div>
+                  </div>
+                  <div className="service-location">
+                    📍 {service.location?.city || 'N/A'}, {service.location?.state || ''}
                   </div>
                 </div>
-                <div className="service-location">
-                  📍 {service.location.city}, {service.location.state}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Featured Providers Section */}
@@ -157,56 +161,66 @@ function Home() {
             View All →
           </Link>
         </div>
-        <div className="featured-providers-grid">
-          {featuredProviders.map((provider) => (
-            <Link
-              key={provider._id}
-              to={`/provider/${provider._id}`}
-              className="featured-provider-card"
-            >
-              <div className="provider-header">
-                <img
-                  src={provider.profileImage}
-                  alt={provider.businessName}
-                  className="provider-image"
-                />
-                {provider.verified && (
-                  <div className="verified-badge" title="Verified Provider">
-                    ✓
-                  </div>
-                )}
-              </div>
-              <div className="provider-content">
-                <h3 className="provider-name">{provider.businessName}</h3>
-                <p className="provider-bio">{provider.bio}</p>
-                <div className="provider-categories">
-                  {provider.categories.map((cat) => (
-                    <span key={cat} className="category-tag">
-                      {cat}
-                    </span>
-                  ))}
+        {featuredProviders.length === 0 ? (
+          <div className="empty-state">
+            <p>No providers available yet.</p>
+          </div>
+        ) : (
+          <div className="featured-providers-grid">
+            {featuredProviders.map((provider) => (
+              <Link
+                key={provider._id}
+                to={`/provider/${provider._id}`}
+                className="featured-provider-card"
+              >
+                <div className="provider-header">
+                  <img
+                    src={provider.profileImage || 'https://via.placeholder.com/100?text=Provider'}
+                    alt={provider.businessName}
+                    className="provider-image"
+                  />
+                  {provider.verified && (
+                    <div className="verified-badge" title="Verified Provider">
+                      ✓
+                    </div>
+                  )}
                 </div>
-                <div className="provider-stats">
-                  <div className="stat-item">
-                    <span className="stat-icon">⭐</span>
-                    <span className="stat-value">{provider.rating.average}</span>
-                    <span className="stat-label">({provider.rating.count} reviews)</span>
+                <div className="provider-content">
+                  <h3 className="provider-name">{provider.businessName}</h3>
+                  <p className="provider-bio">{provider.bio || 'Professional service provider'}</p>
+                  <div className="provider-categories">
+                    {(provider.categories || []).map((cat) => (
+                      <span key={cat} className="category-tag">
+                        {cat}
+                      </span>
+                    ))}
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-icon">✓</span>
-                    <span className="stat-value">
-                      {Math.round((provider.stats.completedBookings / provider.stats.totalBookings) * 100)}%
-                    </span>
-                    <span className="stat-label">completion</span>
+                  <div className="provider-stats">
+                    <div className="stat-item">
+                      <span className="stat-icon">⭐</span>
+                      <span className="stat-value">{provider.rating?.average || 0}</span>
+                      <span className="stat-label">({provider.rating?.count || 0} reviews)</span>
+                    </div>
+                    {provider.stats?.totalBookings > 0 && (
+                      <div className="stat-item">
+                        <span className="stat-icon">✓</span>
+                        <span className="stat-value">
+                          {Math.round((provider.stats.completedBookings / provider.stats.totalBookings) * 100)}%
+                        </span>
+                        <span className="stat-label">completion</span>
+                      </div>
+                    )}
                   </div>
+                  {provider.location && (
+                    <div className="provider-location">
+                      📍 {provider.location.city || 'N/A'}, {provider.location.state || ''}
+                    </div>
+                  )}
                 </div>
-                <div className="provider-location">
-                  📍 {provider.location.city}, {provider.location.state}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Features Section */}

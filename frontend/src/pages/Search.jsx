@@ -3,7 +3,6 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { searchServices } from '../services/serviceAPI';
 import ServiceCard from '../components/ServiceCard';
 import { INDIAN_CITIES } from '../constants/cities';
-import INDIAN_SERVICES from '../data/indianServices';
 
 function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,9 +33,6 @@ function Search() {
     { value: 'other', label: '📦 Other' }
   ];
 
-  // Use INDIAN_SERVICES as dummy data
-  const dummyServices = INDIAN_SERVICES;
-
   // Fetch services whenever URL changes
   useEffect(() => {
     // Read filters from URL
@@ -61,67 +57,16 @@ function Search() {
       // Call search API with all filters
       const response = await searchServices(searchFilters);
       
-      if (response.success && response.data && response.data.length > 0) {
-        setServices(response.data);
+      if (response.success) {
+        setServices(response.data || []);
       } else {
-        // Use dummy data if API returns no results or for demonstration
-        console.log('Using dummy data for demonstration');
-        
-        // Filter dummy data based on search criteria
-        let filteredServices = [...dummyServices];
-        
-        // Apply query filter
-        if (searchFilters.query) {
-          const queryLower = searchFilters.query.toLowerCase();
-          filteredServices = filteredServices.filter(service => 
-            service.title.toLowerCase().includes(queryLower) ||
-            service.description.toLowerCase().includes(queryLower) ||
-            service.category.toLowerCase().includes(queryLower)
-          );
-        }
-        
-        // Apply category filter
-        if (searchFilters.category) {
-          filteredServices = filteredServices.filter(service => 
-            service.category === searchFilters.category
-          );
-        }
-        
-        // Apply city filter
-        if (searchFilters.city) {
-          filteredServices = filteredServices.filter(service => 
-            service.location.city === searchFilters.city
-          );
-        }
-        
-        // Apply price range filter
-        if (searchFilters.minPrice) {
-          filteredServices = filteredServices.filter(service => 
-            service.price >= Number(searchFilters.minPrice)
-          );
-        }
-        
-        if (searchFilters.maxPrice) {
-          filteredServices = filteredServices.filter(service => 
-            service.price <= Number(searchFilters.maxPrice)
-          );
-        }
-        
-        // Apply rating filter
-        if (searchFilters.rating) {
-          filteredServices = filteredServices.filter(service => 
-            service.rating.average >= Number(searchFilters.rating)
-          );
-        }
-        
-        setServices(filteredServices);
+        setServices([]);
+        setError('No services found');
       }
     } catch (err) {
       console.error('Error fetching services:', err);
-      // On error, also use dummy data
-      console.log('Error occurred, using dummy data');
-      setServices(dummyServices);
-      setError('');
+      setServices([]);
+      setError('Failed to fetch services. Please try again.');
     } finally {
       setLoading(false);
     }

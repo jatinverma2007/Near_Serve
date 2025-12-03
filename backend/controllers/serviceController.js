@@ -334,12 +334,8 @@ const deleteService = async (req, res) => {
       });
     }
 
-    // Soft delete - just mark as inactive
-    service.isActive = false;
-    await service.save();
-
-    // Or hard delete if preferred
-    // await service.deleteOne();
+    // Hard delete - remove the service from database
+    await service.deleteOne();
 
     res.json({
       success: true,

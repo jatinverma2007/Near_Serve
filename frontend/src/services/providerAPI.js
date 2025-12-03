@@ -3,6 +3,26 @@ import api from './api';
 // Provider API functions
 
 /**
+ * Get top rated providers
+ * @param {Object} params - Query parameters (limit, etc.)
+ * @returns {Promise} - List of top providers
+ */
+export const getTopProviders = async (params = {}) => {
+  try {
+    const response = await api.get('/providers', { 
+      params: { 
+        ...params, 
+        sortBy: 'rating',
+        sortOrder: 'desc' 
+      } 
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+/**
  * Get provider profile by ID
  * @param {String} providerId - Provider ID
  * @returns {Promise} - Provider profile

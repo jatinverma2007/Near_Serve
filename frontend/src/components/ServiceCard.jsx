@@ -11,8 +11,8 @@ function ServiceCard({ service }) {
   
   const rating = service.rating?.average || service.rating || 0;
   const reviewCount = service.rating?.count || service.reviewCount || 0;
-  const providerName = service.provider?.businessName || service.providerName || 'Provider';
-  const providerId = service.provider?._id || service.providerId || 'unknown';
+  const providerName = service.providerId?.businessName || service.provider?.businessName || service.providerName || 'Provider';
+  const providerId = service.providerId?._id || service.provider?._id || service.providerId || 'unknown';
 
   const handleBookNow = async (e) => {
     e.preventDefault();
