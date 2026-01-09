@@ -14,7 +14,7 @@ function ProviderDashboard() {
   const [error, setError] = useState('');
 
   const handleNavigateToAvailability = () => {
-    navigate('/provider-availability');
+    navigate('/provider/availability');
   };
   
   // Service Form
@@ -26,6 +26,7 @@ function ProviderDashboard() {
     category: 'plumber',
     price: '',
     priceType: 'hourly',
+    businessImage: '',
     location: {
       address: '',
       city: '',
@@ -80,7 +81,7 @@ function ProviderDashboard() {
     try {
       const data = await getProviderBookings();
       if (data.success) {
-        setBookings(data.bookings || []);
+        setBookings(data.data || data.bookings || []);
       }
     } catch (err) {
       console.error('Error fetching bookings:', err);
@@ -91,7 +92,7 @@ function ProviderDashboard() {
     try {
       const data = await getProviderServices();
       if (data.success) {
-        setServices(data.services || []);
+        setServices(data.data || data.services || []);
       }
     } catch (err) {
       console.error('Error fetching services:', err);
@@ -158,6 +159,39 @@ function ProviderDashboard() {
     }
   };
 
+  // Handle image file upload
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+
+    // Convert image to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setServiceForm(prev => ({
+        ...prev,
+        businessImage: reader.result
+      }));
+    };
+    reader.onerror = () => {
+      alert('Error reading file. Please try again.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreateService = () => {
     setEditingService(null);
     setServiceForm({
@@ -166,6 +200,7 @@ function ProviderDashboard() {
       category: 'plumber',
       price: '',
       priceType: 'hourly',
+      businessImage: '',
       location: {
         address: '',
         city: '',
@@ -193,6 +228,7 @@ function ProviderDashboard() {
       category: service.category,
       price: service.price,
       priceType: service.priceType,
+      businessImage: service.businessImage || '',
       location: service.location || {
         address: '',
         city: '',
@@ -214,6 +250,38 @@ function ProviderDashboard() {
 
   const handleSubmitService = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!serviceForm.title || !serviceForm.title.trim()) {
+      alert('Please enter a service title');
+      return;
+    }
+    
+    if (!serviceForm.description || !serviceForm.description.trim()) {
+      alert('Please enter a service description');
+      return;
+    }
+    
+    if (!serviceForm.price || serviceForm.price <= 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+    
+    if (!serviceForm.location.city || !serviceForm.location.city.trim()) {
+      alert('Please enter a city');
+      return;
+    }
+    
+    if (!serviceForm.location.state || !serviceForm.location.state.trim()) {
+      alert('Please enter a state');
+      return;
+    }
+    
+    if (!serviceForm.location.zipCode || !serviceForm.location.zipCode.trim()) {
+      alert('Please enter a ZIP code');
+      return;
+    }
+    
     try {
       if (editingService) {
         await updateService(editingService._id, serviceForm);
@@ -290,10 +358,10 @@ function ProviderDashboard() {
           {profile && <p className="dashboard-subtitle">Welcome back, {profile.businessName}!</p>}
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn-primary" onClick={() => navigate('/provider-availability')}>
+          <button className="btn-primary" onClick={() => navigate('/provider/availability')}>
             📅 Availability
           </button>
-          <button className="btn-secondary" onClick={() => navigate('/profile/provider')}>
+          <button className="btn-secondary" onClick={() => navigate('/provider/setup')}>
             Edit Profile
           </button>
         </div>
@@ -331,7 +399,7 @@ function ProviderDashboard() {
         </div>
         <div 
           className="stat-card" 
-          onClick={() => navigate('/provider-availability')}
+          onClick={() => navigate('/provider/availability')}
           style={{ cursor: 'pointer', border: '2px solid #3b82f6' }}
         >
           <div className="stat-icon">📅</div>
@@ -397,7 +465,7 @@ function ProviderDashboard() {
                       </div>
                       <div className="booking-detail">
                         <span className="detail-label">Phone:</span>
-                        <span>{booking.contactPhone}</span>
+                        <span>{booking.contact?.phone || booking.contactPhone || 'Not provided'}</span>
                       </div>
                       {booking.customerNotes && (
                         <div className="booking-notes">
@@ -537,6 +605,28 @@ function ProviderDashboard() {
                       </div>
                     </div>
                     <div className="form-group">
+                      <label>Business Image (Optional)</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="form-input"
+                        style={{ padding: '0.5rem' }}
+                      />
+                      <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+                        Upload a photo of your business office, building, or service poster (Max 5MB)
+                      </small>
+                      {serviceForm.businessImage && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <img 
+                            src={serviceForm.businessImage} 
+                            alt="Preview" 
+                            style={{ maxWidth: '200px', maxHeight: '150px', objectFit: 'cover', borderRadius: '4px' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group">
                       <label>Address</label>
                       <input
                         type="text"
@@ -631,7 +721,7 @@ function ProviderDashboard() {
                     </p>
                     <div className="service-card-footer">
                       <div className="service-price-small">
-                        ${service.price}/{service.priceType}
+                        ₹{service.price}/{service.priceType}
                       </div>
                       <div className="service-card-actions">
                         <button

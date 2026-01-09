@@ -85,6 +85,9 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  businessImage: {
+    type: String
+  },
   serviceArea: {
     type: Number, // radius in kilometers
     default: 10,

@@ -82,13 +82,12 @@ export const createProviderProfile = async (providerData) => {
 
 /**
  * Update provider profile
- * @param {String} providerId - Provider ID
  * @param {Object} providerData - Updated provider information
  * @returns {Promise} - Updated provider profile
  */
-export const updateProviderProfile = async (providerId, providerData) => {
+export const updateProviderProfile = async (providerData) => {
   try {
-    const response = await api.put(`/providers/${providerId}`, providerData);
+    const response = await api.put('/providers/profile', providerData);
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

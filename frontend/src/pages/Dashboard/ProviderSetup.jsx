@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createProviderProfile } from '../../services/providerAPI';
+import { createProviderProfile, getMyProviderProfile, updateProviderProfile } from '../../services/providerAPI';
 
 function ProviderSetup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [providerId, setProviderId] = useState(null);
   const [formData, setFormData] = useState({
     businessName: '',
     bio: '',
@@ -31,6 +34,47 @@ function ProviderSetup() {
     'plumber', 'electrician', 'carpenter', 'painter', 'cleaner',
     'gardener', 'mechanic', 'tutor', 'photographer', 'chef', 'other'
   ];
+
+  useEffect(() => {
+    loadExistingProfile();
+  }, []);
+
+  const loadExistingProfile = async () => {
+    try {
+      setInitialLoading(true);
+      const response = await getMyProviderProfile();
+      if (response.success && response.provider) {
+        // Profile exists, switch to edit mode
+        setIsEditMode(true);
+        setProviderId(response.provider._id);
+        setFormData({
+          businessName: response.provider.businessName || '',
+          bio: response.provider.bio || '',
+          contactInfo: {
+            phone: response.provider.contactInfo?.phone || '',
+            alternatePhone: response.provider.contactInfo?.alternatePhone || '',
+            email: response.provider.contactInfo?.email || '',
+            website: response.provider.contactInfo?.website || ''
+          },
+          address: {
+            street: response.provider.address?.street || '',
+            city: response.provider.address?.city || '',
+            state: response.provider.address?.state || '',
+            zipCode: response.provider.address?.zipCode || ''
+          },
+          categories: response.provider.categories || [],
+          yearsOfExperience: response.provider.experience?.years || '',
+          licenseNumber: '',
+          insuranceInfo: ''
+        });
+      }
+    } catch (err) {
+      // If no profile exists, stay in create mode
+      console.log('No existing profile found, staying in create mode');
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,15 +125,25 @@ function ProviderSetup() {
         throw new Error('Please select at least one category');
       }
 
-      const response = await createProviderProfile(formData);
-      
-      if (response.success) {
-        alert('Provider profile created successfully!');
-        navigate('/dashboard/provider');
+      let response;
+      if (isEditMode) {
+        // Update existing profile
+        response = await updateProviderProfile(formData);
+        if (response.success) {
+          alert('Provider profile updated successfully!');
+          navigate('/provider/dashboard');
+        }
+      } else {
+        // Create new profile
+        response = await createProviderProfile(formData);
+        if (response.success) {
+          alert('Provider profile created successfully!');
+          navigate('/provider/dashboard');
+        }
       }
     } catch (err) {
-      console.error('Error creating provider profile:', err);
-      setError(err.message || err.errors?.join(', ') || 'Failed to create provider profile');
+      console.error('Error saving provider profile:', err);
+      setError(err.message || err.errors?.join(', ') || 'Failed to save provider profile');
     } finally {
       setLoading(false);
     }
@@ -97,9 +151,21 @@ function ProviderSetup() {
 
   return (
     <div className="provider-setup">
-      <div className="setup-container">
-        <h1>🎉 Become a Service Provider</h1>
-        <p className="setup-subtitle">Create your provider profile to start offering services</p>
+      {initialLoading ? (
+        <div className="setup-container">
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Loading...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="setup-container">
+          <h1>{isEditMode ? '✏️ Edit Provider Profile' : '🎉 Become a Service Provider'}</h1>
+          <p className="setup-subtitle">
+            {isEditMode 
+              ? 'Update your provider profile information' 
+              : 'Create your provider profile to start offering services'}
+          </p>
 
         {error && (
           <div className="error-message" style={{ marginBottom: '1rem' }}>
@@ -315,11 +381,14 @@ function ProviderSetup() {
               className="btn-primary"
               disabled={loading}
             >
-              {loading ? 'Creating Profile...' : 'Create Provider Profile'}
+              {loading 
+                ? (isEditMode ? 'Updating Profile...' : 'Creating Profile...') 
+                : (isEditMode ? 'Update Provider Profile' : 'Create Provider Profile')}
             </button>
           </div>
         </form>
-      </div>
+        </div>
+      )}
 
       <style jsx>{`
         .provider-setup {
@@ -335,6 +404,32 @@ function ProviderSetup() {
           border-radius: 12px;
           padding: 2rem;
           box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 3rem;
+        }
+
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #e2e8f0;
+          border-top-color: #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .loading p {
+          margin-top: 1rem;
+          color: #718096;
         }
 
         .setup-container h1 {

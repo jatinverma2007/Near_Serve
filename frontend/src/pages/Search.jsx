@@ -10,6 +10,12 @@ function Search() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 1,
+    limit: 10
+  });
   const [filters, setFilters] = useState({
     query: '',
     category: '',
@@ -45,20 +51,32 @@ function Search() {
       rating: searchParams.get('rating') || searchParams.get('minRating') || ''
     };
     
+    const page = searchParams.get('page') || '1';
+    
     setFilters(urlFilters);
-    fetchServices(urlFilters);
+    fetchServices(urlFilters, page);
   }, [location.search]);
 
-  const fetchServices = async (searchFilters = filters) => {
+  const fetchServices = async (searchFilters = filters, page = 1) => {
     try {
       setLoading(true);
       setError('');
       
-      // Call search API with all filters
-      const response = await searchServices(searchFilters);
+      // Call search API with all filters and pagination
+      const response = await searchServices({
+        ...searchFilters,
+        page,
+        limit: 10
+      });
       
       if (response.success) {
         setServices(response.data || []);
+        setPagination(response.pagination || {
+          total: response.data?.length || 0,
+          page: Number(page),
+          pages: 1,
+          limit: 10
+        });
       } else {
         setServices([]);
         setError('No services found');
@@ -81,11 +99,20 @@ function Search() {
   const handleSearch = (e) => {
     e.preventDefault();
     // Update URL params which will trigger useEffect to fetch
-    const params = {};
+    const params = { page: '1' }; // Reset to page 1 on new search
     Object.keys(filters).forEach(key => {
       if (filters[key]) params[key] = filters[key];
     });
     setSearchParams(params);
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = { page: newPage.toString() };
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) params[key] = filters[key];
+    });
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleReset = () => {
@@ -228,13 +255,38 @@ function Search() {
         ) : (
           <>
             <div className="results-header">
-              <h2>Found {services.length} service{services.length !== 1 ? 's' : ''}</h2>
+              <h2>Found {pagination.total} service{pagination.total !== 1 ? 's' : ''}</h2>
             </div>
             <div className="services-list">
               {services.map(service => (
                 <ServiceCard key={service._id} service={service} />
               ))}
             </div>
+            
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+              <div className="pagination">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page === 1}
+                  className="btn-pagination"
+                >
+                  ← Previous
+                </button>
+                
+                <div className="pagination-info">
+                  Page {pagination.page} of {pagination.pages}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page === pagination.pages}
+                  className="btn-pagination"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -30,8 +30,8 @@ function Home() {
       try {
         setLoading(true);
         
-        // Fetch featured services
-        const servicesResponse = await getAllServices({ limit: 8 });
+        // Fetch featured services (limit to 7 for home page)
+        const servicesResponse = await getAllServices({ limit: 7 });
         if (servicesResponse.success && servicesResponse.data) {
           setFeaturedServices(servicesResponse.data);
         }
@@ -120,7 +120,7 @@ function Home() {
               >
                 <div className="service-image-container">
                   <img
-                    src={service.images?.[0] || 'https://via.placeholder.com/300x200?text=Service'}
+                    src={service.businessImage || service.images?.[0] || 'https://via.placeholder.com/300x200?text=Service'}
                     alt={service.title}
                     className="service-image"
                   />

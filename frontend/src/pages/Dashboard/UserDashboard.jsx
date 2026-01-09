@@ -81,11 +81,11 @@ function UserDashboard() {
   };
 
   const handleViewService = (serviceId) => {
-    navigate(`/service/${serviceId}`);
+    navigate(`/services/${serviceId}`);
   };
 
   const handleWriteReview = (booking) => {
-    navigate(`/service/${booking.service._id}`, { 
+    navigate(`/services/${booking.serviceId?._id || booking.service?._id}`, { 
       state: { showReviewForm: true, bookingId: booking._id } 
     });
   };
@@ -443,7 +443,7 @@ function UserDashboard() {
                     </p>
                     <div className="service-card-footer">
                       <div className="service-price-small">
-                        ${service.price}/{service.priceType}
+                        ₹{service.price}/{service.priceType}
                       </div>
                       <div className="service-card-actions">
                         <button

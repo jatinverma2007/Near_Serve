@@ -152,6 +152,7 @@ const createService = async (req, res) => {
       priceType,
       location,
       images,
+      businessImage,
       serviceArea
     } = req.body;
 
@@ -180,6 +181,7 @@ const createService = async (req, res) => {
       providerId: provider._id,
       location,
       images: images || [],
+      businessImage: businessImage || '',
       serviceArea: serviceArea || 10
     });
 
@@ -254,6 +256,7 @@ const updateService = async (req, res) => {
       'priceType',
       'location',
       'images',
+      'businessImage',
       'serviceArea',
       'availability',
       'isActive'

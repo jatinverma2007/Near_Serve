@@ -64,7 +64,14 @@ function BookingForm({ serviceId, servicePrice, servicePriceType, onSuccess }) {
 
       const bookingData = {
         serviceId,
-        ...formData
+        scheduledDate: formData.scheduledDate,
+        scheduledTime: formData.scheduledTime,
+        address: formData.address,
+        contact: {
+          phone: formData.contactPhone,
+          alternatePhone: ''
+        },
+        customerNotes: formData.customerNotes
       };
 
       const data = await createBooking(bookingData);
@@ -111,7 +118,7 @@ function BookingForm({ serviceId, servicePrice, servicePriceType, onSuccess }) {
       <div className="booking-summary">
         <div className="summary-item">
           <span className="label">Price:</span>
-          <span className="value">${servicePrice} / {servicePriceType}</span>
+          <span className="value">₹{servicePrice} / {servicePriceType}</span>
         </div>
       </div>
 

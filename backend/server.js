@@ -38,10 +38,10 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions)); // Enable CORS with configuration
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(passport.initialize()); // Initialize Passport for OAuth
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increased limit for base64 images
+app.use(bodyParser.json({ limit: '10mb' })); // Increased limit for base64 images
 
 // Routes
 app.get('/', (req, res) => {

@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { createBooking } from '../services/bookingAPI';
+import { useNavigate } from 'react-router-dom';
 
 function ServiceCard({ service }) {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -16,67 +13,21 @@ function ServiceCard({ service }) {
 
   const handleBookNow = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent card click event
     
-    // Check if user is logged in
-    if (!token || !user) {
-      alert('Please login to book a service');
-      navigate('/login');
-      return;
-    }
+    // Navigate to service details page instead of direct booking
+    navigate(`/services/${service._id}`);
+  };
 
-    // Check if user has selected a role
-    if (!user.role) {
-      alert('Please select your role first');
-      navigate('/select-role');
-      return;
-    }
-
-    // Customers can book, providers cannot
-    if (user.role === 'provider') {
-      alert('Providers cannot book services. Please login with a customer account.');
-      return;
-    }
-
-    if (!service._id) {
-      alert('Invalid service. Please try again.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      // Create booking with minimal data - backend will auto-generate missing fields
-      const bookingData = {
-        serviceId: service._id,
-        customerNotes: `Booking for ${service.title || service.name}`
-      };
-
-      const response = await createBooking(bookingData);
-      
-      if (response.success || response.data) {
-        alert('✅ Booking created successfully! Check your dashboard.');
-        // Navigate to user dashboard where bookings are displayed
-        navigate('/dashboard/user');
-      } else {
-        throw new Error(response.message || 'Failed to create booking');
-      }
-    } catch (err) {
-      console.error('Booking error:', err);
-      const errorMsg = err.response?.data?.message || err.message || 'Failed to create booking';
-      setError(errorMsg);
-      alert(`❌ ${errorMsg}. Please try again.`);
-    } finally {
-      setLoading(false);
-    }
+  const handleCardClick = () => {
+    // Navigate to service details page
+    navigate(`/services/${service._id}`);
   };
 
   return (
-    <div className="service-item">
+    <div className="service-item" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
       <div className="service-item-header">
-        <Link to={`/services/${service._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h3>{service.title}</h3>
-        </Link>
+        <h3>{service.title}</h3>
         <div className="service-rating">
           <span className="rating-star">⭐</span>
           <span>{typeof rating === 'number' ? rating.toFixed(1) : '0.0'}</span>
@@ -121,11 +72,11 @@ function ServiceCard({ service }) {
             className="btn-view"
             disabled={loading}
             style={{ 
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
+              cursor: 'pointer',
+              opacity: 1
             }}
           >
-            {loading ? 'Booking...' : 'Book Now →'}
+            View Details →
           </button>
         </div>
         {error && <div className="error-text" style={{ color: 'red', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</div>}

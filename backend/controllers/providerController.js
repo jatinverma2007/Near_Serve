@@ -120,8 +120,8 @@ const providerController = {
       // Update allowed fields
       const allowedUpdates = [
         'businessName', 'bio', 'profileImage', 'coverImage',
-        'contactInfo', 'address', 'serviceCategories', 'yearsOfExperience',
-        'licenseNumber', 'insuranceInfo', 'certifications'
+        'contactInfo', 'address', 'categories', 'experience',
+        'certifications'
       ];
 
       Object.keys(req.body).forEach(key => {
@@ -129,6 +129,14 @@ const providerController = {
           provider[key] = req.body[key];
         }
       });
+
+      // Handle yearsOfExperience if sent (for backward compatibility)
+      if (req.body.yearsOfExperience !== undefined) {
+        if (!provider.experience) {
+          provider.experience = {};
+        }
+        provider.experience.years = req.body.yearsOfExperience;
+      }
 
       await provider.save();
 

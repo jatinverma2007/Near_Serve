@@ -25,7 +25,7 @@ function ServiceDetails() {
       setError('');
       const data = await getServiceById(id);
       if (data.success) {
-        setService(data.service);
+        setService(data.data);
       } else {
         setError('Service not found');
       }
@@ -82,8 +82,8 @@ function ServiceDetails() {
 
   const rating = service.rating?.average || service.rating || 0;
   const reviewCount = service.rating?.count || service.reviewCount || 0;
-  const providerName = service.provider?.businessName || 'Provider';
-  const providerId = service.provider?._id || service.providerId;
+  const providerName = service.providerId?.businessName || service.provider?.businessName || 'Provider';
+  const providerId = service.providerId?._id || service.provider?._id || service.providerId;
 
   return (
     <div className="service-details-page">
@@ -112,7 +112,7 @@ function ServiceDetails() {
         </div>
         <div className="service-price-card">
           <div className="price-label">Starting at</div>
-          <div className="price-amount">${service.price}</div>
+          <div className="price-amount">₹{service.price}</div>
           <div className="price-type">
             {service.priceType === 'hourly' ? 'per hour' :
              service.priceType === 'per-visit' ? 'per visit' :
@@ -130,6 +130,17 @@ function ServiceDetails() {
       <div className="service-details-content">
         {/* Main Content */}
         <div className="service-main">
+          {/* Business Image */}
+          {service.businessImage && (
+            <div className="service-images">
+              <img 
+                src={service.businessImage} 
+                alt={`${service.title} - Business`}
+                className="main-image"
+              />
+            </div>
+          )}
+
           {/* Images */}
           {service.images && service.images.length > 0 && (
             <div className="service-images">
@@ -160,16 +171,28 @@ function ServiceDetails() {
           </div>
 
           {/* Availability */}
-          {service.availability && (
+          {service.availability && typeof service.availability === 'object' && (
             <div className="service-section">
               <h2>Availability</h2>
               <div className="availability-grid">
                 {Object.entries(service.availability).map(([day, isAvailable]) => (
                   <div key={day} className={`availability-item ${isAvailable ? 'available' : 'unavailable'}`}>
-                    <span className="day-name">{day}</span>
+                    <span className="day-name">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
                     <span className="status">{isAvailable ? '✓ Available' : '✗ Unavailable'}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Show simple availability if boolean */}
+          {typeof service.availability === 'boolean' && (
+            <div className="service-section">
+              <h2>Availability</h2>
+              <div className="availability-status">
+                <span className={service.availability ? 'available' : 'unavailable'}>
+                  {service.availability ? '✓ Currently Available' : '✗ Currently Unavailable'}
+                </span>
               </div>
             </div>
           )}
@@ -220,30 +243,30 @@ function ServiceDetails() {
           <div className="provider-card">
             <h3>Service Provider</h3>
             <Link to={`/provider/${providerId}`} className="provider-link">
-              {service.provider?.profileImage && (
+              {(service.providerId?.profileImage || service.provider?.profileImage) && (
                 <img 
-                  src={service.provider.profileImage}
+                  src={service.providerId?.profileImage || service.provider?.profileImage}
                   alt={providerName}
                   className="provider-avatar"
                 />
               )}
               <div className="provider-info">
                 <h4>{providerName}</h4>
-                {service.provider?.rating && (
+                {(service.providerId?.rating || service.provider?.rating) && (
                   <div className="provider-rating">
                     <span>⭐</span>
-                    <span>{service.provider.rating.average?.toFixed(1)}</span>
+                    <span>{(service.providerId?.rating?.average || service.provider?.rating?.average)?.toFixed(1)}</span>
                     <span className="review-count">
-                      ({service.provider.rating.count} reviews)
+                      ({service.providerId?.rating?.count || service.provider?.rating?.count} reviews)
                     </span>
                   </div>
                 )}
               </div>
             </Link>
-            {service.provider?.bio && (
-              <p className="provider-bio">{service.provider.bio}</p>
+            {(service.providerId?.bio || service.provider?.bio) && (
+              <p className="provider-bio">{service.providerId?.bio || service.provider?.bio}</p>
             )}
-            {service.provider?.verified && (
+            {(service.providerId?.verified || service.provider?.verified) && (
               <div className="verified-provider">
                 <span className="verified-icon">✓</span>
                 Verified Provider
@@ -274,19 +297,19 @@ function ServiceDetails() {
           )}
 
           {/* Contact Info */}
-          {service.provider?.contactInfo && (
+          {(service.providerId?.contactInfo || service.provider?.contactInfo) && (
             <div className="contact-card">
               <h3>Contact Information</h3>
-              {service.provider.contactInfo.phone && (
+              {(service.providerId?.contactInfo?.phone || service.provider?.contactInfo?.phone) && (
                 <div className="contact-item">
                   <span className="contact-icon">📞</span>
-                  <span>{service.provider.contactInfo.phone}</span>
+                  <span>{service.providerId?.contactInfo?.phone || service.provider?.contactInfo?.phone}</span>
                 </div>
               )}
-              {service.provider.contactInfo.email && (
+              {(service.providerId?.contactInfo?.email || service.provider?.contactInfo?.email) && (
                 <div className="contact-item">
                   <span className="contact-icon">📧</span>
-                  <span>{service.provider.contactInfo.email}</span>
+                  <span>{service.providerId?.contactInfo?.email || service.provider?.contactInfo?.email}</span>
                 </div>
               )}
             </div>
@@ -298,3 +321,4 @@ function ServiceDetails() {
 }
 
 export default ServiceDetails;
+
