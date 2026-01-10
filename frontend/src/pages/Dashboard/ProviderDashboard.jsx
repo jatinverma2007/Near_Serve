@@ -575,6 +575,13 @@ function ProviderDashboard() {
                           <option value="painter">Painter</option>
                           <option value="gardener">Gardener</option>
                           <option value="mechanic">Mechanic</option>
+                          <option value="tutor">Tutor</option>
+                          <option value="photographer">Photographer</option>
+                          <option value="chef">Chef</option>
+                          <option value="ac-repair">AC Repair</option>
+                          <option value="salon">Salon</option>
+                          <option value="pest-control">Pest Control</option>
+                          <option value="appliance-repair">Appliance Repair</option>
                           <option value="other">Other</option>
                         </select>
                       </div>

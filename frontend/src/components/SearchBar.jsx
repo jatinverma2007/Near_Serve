@@ -17,6 +17,14 @@ function SearchBar({ initialQuery = '', initialCategory = '', initialCity = '', 
     { name: 'Painter', value: 'painter' },
     { name: 'Gardener', value: 'gardener' },
     { name: 'Mechanic', value: 'mechanic' },
+    { name: 'Tutor', value: 'tutor' },
+    { name: 'Photographer', value: 'photographer' },
+    { name: 'Chef', value: 'chef' },
+    { name: 'AC Repair', value: 'ac-repair' },
+    { name: 'Salon', value: 'salon' },
+    { name: 'Pest Control', value: 'pest-control' },
+    { name: 'Appliance Repair', value: 'appliance-repair' },
+    { name: 'Other', value: 'other' },
   ];
 
   const handleSearch = (e) => {

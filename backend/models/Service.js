@@ -16,7 +16,7 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Service category is required'],
     enum: {
-      values: ['plumber', 'electrician', 'mechanic', 'carpenter', 'painter', 'cleaner', 'gardener', 'other'],
+      values: ['plumber', 'electrician', 'mechanic', 'carpenter', 'painter', 'cleaner', 'gardener', 'tutor', 'photographer', 'chef', 'ac-repair', 'salon', 'pest-control', 'appliance-repair', 'other'],
       message: '{VALUE} is not a valid category'
     }
   },

@@ -91,7 +91,10 @@ const getAllServices = async (req, res) => {
 const getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('providerId', 'businessName bio contactInfo address rating verification');
+      .populate({
+        path: 'providerId',
+        select: 'businessName bio contactInfo address rating verification availability weeklyAvailability holidays breaks'
+      });
 
     if (!service) {
       return res.status(404).json({
@@ -100,9 +103,21 @@ const getServiceById = async (req, res) => {
       });
     }
 
+    // Merge provider availability with service data
+    const serviceData = service.toObject();
+    if (serviceData.providerId) {
+      // Include provider's detailed availability if available
+      serviceData.providerAvailability = {
+        isAvailable: serviceData.providerId.availability?.isAvailable,
+        weeklyAvailability: serviceData.providerId.weeklyAvailability || [],
+        holidays: serviceData.providerId.holidays || [],
+        breaks: serviceData.providerId.breaks || []
+      };
+    }
+
     res.json({
       success: true,
-      data: service
+      data: serviceData
     });
   } catch (error) {
     console.error('Get service by ID error:', error);

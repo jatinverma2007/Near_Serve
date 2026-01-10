@@ -157,6 +157,7 @@ const getUserBookings = async (req, res) => {
     const bookings = await Booking.find(query)
       .populate('serviceId', 'title category price priceType images location')
       .populate('providerId', 'businessName contactInfo rating')
+      .populate('userId', 'name email phone')
       .sort(sort)
       .skip(skip)
       .limit(Number(limit));
@@ -214,10 +215,19 @@ const getProviderBookings = async (req, res) => {
     // Execute query
     const bookings = await Booking.find(query)
       .populate('serviceId', 'title category price priceType')
-      .populate('userId', 'name email')
+      .populate('userId', 'name email phone')
       .sort(sort)
       .skip(skip)
       .limit(Number(limit));
+
+    // Format bookings to include both userId and user for frontend compatibility
+    const formattedBookings = bookings.map(booking => {
+      const bookingObj = booking.toObject();
+      return {
+        ...bookingObj,
+        user: bookingObj.userId
+      };
+    });
 
     const total = await Booking.countDocuments(query);
 
@@ -232,7 +242,7 @@ const getProviderBookings = async (req, res) => {
 
     res.json({
       success: true,
-      data: bookings,
+      data: formattedBookings,
       stats,
       pagination: {
         total,
@@ -270,7 +280,7 @@ const updateBookingStatus = async (req, res) => {
     // Find booking
     const booking = await Booking.findById(req.params.id)
       .populate('serviceId', 'title')
-      .populate('userId', 'name');
+      .populate('userId', 'name email phone');
 
     if (!booking) {
       return res.status(404).json({
@@ -337,7 +347,7 @@ const updateBookingStatus = async (req, res) => {
     // Populate updated booking
     await booking.populate([
       { path: 'serviceId', select: 'title category price priceType' },
-      { path: 'userId', select: 'name email' },
+      { path: 'userId', select: 'name email phone' },
       { path: 'providerId', select: 'businessName contactInfo' }
     ]);
 

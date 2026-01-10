@@ -11,7 +11,11 @@ const mongoose = require('mongoose');
 exports.createReview = async (req, res) => {
   try {
     const { bookingId, serviceId, rating, comment, images } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id || req.user._id;
+
+    console.log('=== CREATE REVIEW REQUEST ===');
+    console.log('User ID:', userId);
+    console.log('Request Body:', { bookingId, serviceId, rating, comment });
 
     // Validate required fields
     if (!bookingId || !serviceId || !rating || !comment) {
@@ -116,7 +120,7 @@ exports.createReview = async (req, res) => {
       userId: booking.providerId,
       type: 'review_received',
       title: 'New Review Received',
-      message: `You received a ${rating}-star review from ${req.user.name}`,
+      message: `You received a ${rating}-star review from ${review.userId.name || 'a customer'}`,
       relatedId: review._id,
       relatedModel: 'Review'
     });
@@ -167,10 +171,17 @@ exports.getServiceReviews = async (req, res) => {
     const reviews = await Review.find({ serviceId })
       .populate('userId', 'name email')
       .populate('providerId', 'businessName')
+      .populate('serviceId', 'title category')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    // Map userId to user for frontend compatibility
+    const formattedReviews = reviews.map(review => ({
+      ...review,
+      user: review.userId
+    }));
 
     // Get total count for pagination
     const totalReviews = await Review.countDocuments({ serviceId });
@@ -202,13 +213,13 @@ exports.getServiceReviews = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: reviews.length,
+      count: formattedReviews.length,
       totalReviews,
       page,
       totalPages,
       averageRating: service.rating,
       ratingDistribution: distribution,
-      reviews
+      reviews: formattedReviews
     });
   } catch (error) {
     console.error('Error fetching service reviews:', error);
@@ -291,17 +302,24 @@ exports.getMyReviews = async (req, res) => {
       .limit(limit)
       .lean();
 
+    // Map serviceId to service and providerId to provider for frontend compatibility
+    const formattedReviews = reviews.map(review => ({
+      ...review,
+      service: review.serviceId,
+      provider: review.providerId
+    }));
+
     // Get total count for pagination
     const totalReviews = await Review.countDocuments({ userId });
     const totalPages = Math.ceil(totalReviews / limit);
 
     res.status(200).json({
       success: true,
-      count: reviews.length,
+      count: formattedReviews.length,
       totalReviews,
       page,
       totalPages,
-      reviews
+      reviews: formattedReviews
     });
   } catch (error) {
     console.error('Error fetching user reviews:', error);

@@ -78,7 +78,7 @@ const providerSchema = new mongoose.Schema({
   },
   categories: [{
     type: String,
-    enum: ['plumber', 'electrician', 'mechanic', 'carpenter', 'painter', 'cleaner', 'gardener', 'other']
+    enum: ['plumber', 'electrician', 'mechanic', 'carpenter', 'painter', 'cleaner', 'gardener', 'tutor', 'photographer', 'chef', 'ac-repair', 'salon', 'pest-control', 'appliance-repair', 'other']
   }],
   experience: {
     years: {

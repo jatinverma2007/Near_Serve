@@ -3,17 +3,18 @@ const router = express.Router();
 const providerController = require('../controllers/providerController');
 const authMiddleware = require('../middleware/auth');
 
-// Protected routes (require authentication)
-// Create provider profile
-router.post('/', authMiddleware, providerController.createProviderProfile);
-
+// Protected routes with specific paths (must come first)
 router.get('/me', authMiddleware, providerController.getMyProviderProfile);
 router.get('/profile', authMiddleware, providerController.getProviderProfile);
 router.put('/profile', authMiddleware, providerController.updateProviderProfile);
 router.get('/services', authMiddleware, providerController.getProviderServices);
+router.post('/', authMiddleware, providerController.createProviderProfile);
 
-// Advanced Availability System Routes
-// Get provider availability
+// Public routes
+router.get('/', providerController.getAllProviders);
+
+// Routes with :id parameter (must come after specific paths)
+router.get('/:id', providerController.getProviderById);
 router.get('/:id/availability', providerController.getProviderAvailability);
 
 // Update full availability (protected)

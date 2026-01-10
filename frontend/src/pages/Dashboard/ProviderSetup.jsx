@@ -32,7 +32,8 @@ function ProviderSetup() {
 
   const categoryOptions = [
     'plumber', 'electrician', 'carpenter', 'painter', 'cleaner',
-    'gardener', 'mechanic', 'tutor', 'photographer', 'chef', 'other'
+    'gardener', 'mechanic', 'tutor', 'photographer', 'chef',
+    'ac-repair', 'salon', 'pest-control', 'appliance-repair', 'other'
   ];
 
   useEffect(() => {
@@ -332,7 +333,9 @@ function ProviderSetup() {
                     onChange={() => handleCategoryChange(category)}
                   />
                   <span className="category-label">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {category.split('-').map(word => 
+                      word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ')}
                   </span>
                 </label>
               ))}

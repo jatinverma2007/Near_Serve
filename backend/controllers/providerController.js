@@ -5,6 +5,97 @@ const Provider = require('../models/Provider');
 const mongoose = require('mongoose');
 
 const providerController = {
+  // Get all providers (public)
+  getAllProviders: async (req, res) => {
+    try {
+      const { category, city, sortBy, sortOrder, page = 1, limit = 10 } = req.query;
+      
+      const query = {};
+      
+      // Filter by category
+      if (category) {
+        query.categories = category;
+      }
+      
+      // Filter by city
+      if (city) {
+        query['address.city'] = new RegExp(city, 'i');
+      }
+      
+      // Build sort object
+      let sort = {};
+      if (sortBy) {
+        sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+      } else {
+        sort = { 'rating.average': -1 }; // Default: sort by rating
+      }
+      
+      // Pagination
+      const skip = (page - 1) * limit;
+      
+      const providers = await Provider.find(query)
+        .populate('userId', 'name email')
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+      
+      const total = await Provider.countDocuments(query);
+      
+      res.status(200).json({
+        success: true,
+        count: providers.length,
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        providers
+      });
+    } catch (error) {
+      console.error('Get all providers error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch providers',
+        error: error.message
+      });
+    }
+  },
+
+  // Get provider by ID (public)
+  getProviderById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid provider ID format'
+        });
+      }
+      
+      const provider = await Provider.findById(id)
+        .populate('userId', 'name email');
+      
+      if (!provider) {
+        return res.status(404).json({
+          success: false,
+          message: 'Provider not found'
+        });
+      }
+      
+      res.status(200).json({
+        success: true,
+        provider
+      });
+    } catch (error) {
+      console.error('Get provider by ID error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch provider',
+        error: error.message
+      });
+    }
+  },
+
   // Create provider profile
   createProviderProfile: async (req, res) => {
     try {
@@ -108,14 +199,21 @@ const providerController = {
   // Update provider profile
   updateProviderProfile: async (req, res) => {
     try {
+      console.log('=== UPDATE PROVIDER PROFILE REQUEST ===');
+      console.log('User ID:', req.user.id);
+      console.log('Request Body:', req.body);
+
       const provider = await Provider.findOne({ userId: req.user.id });
       
       if (!provider) {
+        console.log('Provider not found for user:', req.user.id);
         return res.status(404).json({ 
           success: false, 
           message: 'Provider profile not found' 
         });
       }
+
+      console.log('Found provider:', provider._id);
 
       // Update allowed fields
       const allowedUpdates = [
@@ -126,6 +224,7 @@ const providerController = {
 
       Object.keys(req.body).forEach(key => {
         if (allowedUpdates.includes(key)) {
+          console.log(`Updating field: ${key}`);
           provider[key] = req.body[key];
         }
       });
@@ -136,9 +235,12 @@ const providerController = {
           provider.experience = {};
         }
         provider.experience.years = req.body.yearsOfExperience;
+        console.log('Updated yearsOfExperience:', req.body.yearsOfExperience);
       }
 
+      console.log('Saving provider...');
       await provider.save();
+      console.log('Provider saved successfully');
 
       res.status(200).json({
         success: true,
